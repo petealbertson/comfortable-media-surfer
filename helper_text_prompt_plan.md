@@ -1,66 +1,51 @@
-Prompt 1 – Migration & Model
-You are working in a Rails 7 CMS.  
-Task: introduce helper_text support.
+# Helper Text Feature – LLM Prompt Plan
 
-1. Generate migration on `comfy_cms_fragments`:
-   • helper_text :string, limit: 240
-2. In `comfy_cms_fragments` model:
-   • validates :helper_text, length: { maximum: 240 }
-   • before_validation :truncate_helper_text (truncates helper_text to 240 and adds ellipsis if necessary)
-3. Add unit tests (minitest) for model.
-4. Keep rubocop clean.
+Below is a series of test-first prompts to incrementally implement the CMS helper text purely via layout parsing. Each step builds on the previous, includes tests, and keeps RuboCop clean.
 
-Write tests first, then code until all green.
+Prompt 1 – Layout Spec (RED)
+Write a failing Minitest spec for `Comfy::Cms::Layout#content_tokens`:
+- Given content `'a {{cms:text body helper:"Tip"}} b'`,
+  when calling `layout.content_tokens`, expect tokens to include:
+  `{ tag_class: 'text', tag_params: 'body', helper_text: 'Tip', source: '{{cms:text body helper:"Tip"}}' }`.
+- Add a spec for truncation: helper text > 240 chars yields 237 chars plus `…`.
 
-Prompt 2 – Fragment Test (RED)
-Write a failing minitest unit test for the `Comfy::Cms::WithFragments` concern:
+Prompt 2 – Layout Implementation
+In `app/models/comfy/cms/layout.rb` (method `content_tokens`):
+- Extend tag parser to recognise `helper:"…"` parameter.
+- Add `helper_text` key to each token hash.
+- Truncate >240 chars to 237 + `…`.
+- Preserve existing `tag_class`, `tag_params`, `source` keys and behavior.
+- Run tests and ensure RuboCop passes.
 
-• Given a model instance including `Comfy::Cms::WithFragments`, when calling
-  `fragments_attributes=` with a hash:
-    { identifier: 'headline', content: 'Title', helper_text: 'Helper text here' }
-  expect the built fragment to have `helper_text` set to 'Helper text here'.
+Prompt 3 – Admin UI Spec (RED)
+Write a failing system/integration Minitest spec for the Comfy admin edit form:
+- Given a page whose layout `content` includes `{{cms:text body helper:"Tip"}}`,
+  when visiting the admin edit page, within the fragment field for `body`, assert:
+  `%p.text-muted` with text "Tip" appears immediately below the input.
+- Visit the public show page and assert no helper text (`<p class="text-muted">`) is rendered.
 
-No implementation change yet; make spec fail.
+Prompt 4 – Admin UI Implementation
+In `app/views/comfy/admin/cms/fragments/_form_fragments.html.haml` or
+`ComfortableMediaSurfer::FormBuilder#fragment_field`:
+- Update to accept and render a `helper_text` attribute from tokens.
+- Render `%p.text-muted= helper_text` under the input when present.
+- Preserve all existing form builder behavior and HTML structure.
+- Run integration tests and ensure RuboCop passes.
 
-Prompt 3 – Implement helper_text assignment in fragments_attributes=
+Prompt 5 – Edge Case Testing
+Add tests for helper text boundaries:
+- Exactly 240 chars yields the full string with no ellipsis.
+- 241+ chars yields the first 237 chars plus an ellipsis (`…`).
+- No `helper` parameter yields no helper paragraph in the form.
 
-Update the `fragments_attributes=` method in the `Comfy::Cms::WithFragments` concern so that when a hash or array of hashes is passed in, if a `helper_text` key is present, it is assigned to the corresponding fragment's `helper_text` attribute.
+Prompt 6 – Warning Log on Truncation
+In the layout parser (`content_tokens`):
+- When truncating a helper string, call `Rails.logger.warn`
+  including the layout identifier and original length.
+- Write a unit test capturing logger output, verifying the warning
+  logs only on truncation and not on shorter strings.
 
-• Ensure that this does not break existing fragment assignment logic or parameter handling.
-• Update or add tests to verify that `helper_text` is correctly set on the fragment when provided.
-• Run the entire test suite and ensure RuboCop passes.
-
-Prompt 4 – Permit & Persist helper_text through controller
-Ensure `helper_text` flows into `fragments_attributes=` and is persisted:
-• In `Comfy::Admin::Cms::LayoutsController#layout_params`, permit `fragments_attributes: [:identifier, :content, :helper_text, ...]`.
-• Confirm `fragments_attributes=` assigns and truncates `helper_text` correctly via existing callback in `Comfy::Cms::Fragment`.
-• Write a Rails request spec that creates/updates a layout with one fragment including `helper_text`, then assert the saved fragment’s `helper_text` matches (truncated if needed).
-
-Prompt 5 – Admin Partial
-Create/modify `_field_helper_text.html.erb` partial:
-
-<p class="text-muted"><%= field.helper_text %></p>
-
-Render this partial in admin form builder when helper_text present.  
-Add system spec (Capybara) visiting admin edit page for a page with helper text → expects visible text.  
-Verify public site view does NOT include helper text.
-
-Rubocop + i18n lint clean.
-
-Prompt 6 – Boundary Edge Tests
-Add spec covering:
-• exactly 240 chars (no ellipsis)
-• 241 chars (truncate + ellipsis)
-• huge (>1k) input
-
-Confirm service handles all. Run suite.
-
-Prompt 7 – Logging
-Add ActiveSupport::Notifications instrument:
-'cms.helper_text.truncated' with payload { field_id:, original_length: }  
-Unit test with `subscriber` that event fires only on truncation.
-
-Prompt 8 – Final Cleanup
-Run rubocop -A, brakeman, annotate models.  
-Update CHANGELOG with Helper Text feature entry.  
-Ensure `bin/minitest` and `bin/rails test` pass.
+Prompt 7 – Final Cleanup & Docs
+- Run `bundle exec rubocop -A`, fix offenses.
+- Ensure full test suite (`bin/rails test`) passes.
+- Update `CHANGELOG.md` with a clear entry for helper text support.

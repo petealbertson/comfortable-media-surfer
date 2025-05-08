@@ -16,19 +16,17 @@ This document details the specifications for implementing a helper text feature 
 
 ## Validation & Data Handling
 - **Character Limit**: Helper text must not exceed 240 characters.
-  - If the helper text exceeds 240 characters, it should be truncated on the server side.
+  - If the helper text exceeds 240 characters, it should be truncated when parsing layout content.
   - An ellipsis (`…`) is appended to indicate truncation.
-- **Server-Side Processing**: The truncation logic is executed server side when saving the field value, ensuring consistent data handling.
-- The helper text is stored as metadata associated with the corresponding CMS field.
+- **Parsing Logic**: Truncation and enforcement of the character limit occur in the layout parser when extracting the `helper` parameter.
 
 ## Architecture & Implementation
 - **CMS Parser Enhancements**: Update the layout parser to recognize and process the inline `helper` parameter.
-- **Server-Side Save Logic**: Incorporate truncation logic within the CMS field processing workflow during save operations.
-  - Ensure that helper texts for all field types follow the 240-character limit, adding an ellipsis when necessary.
+- **Parser & Truncation Logic**: In the layout parser, apply truncation logic when extracting the helper parameter, enforcing the 240-character limit and appending an ellipsis if needed.
 - **Styling in the CMS Edit Interface**: Render helper text using appropriate Bootstrap 4 classes to achieve the desired appearance.
 
 ## Error Handling Strategies
-- Automatically truncate any helper text exceeding 240 characters and append an ellipsis without blocking the save operation.
+- Automatically truncate any helper text exceeding 240 characters and append an ellipsis without blocking the parsing operation.
 - Log a warning message (if applicable) for instances of truncation for further review by developers, but do not interrupt user workflow.
 - Ensure that any errors related to helper text processing do not impact the handling of other CMS fields.
 
@@ -50,4 +48,4 @@ This document details the specifications for implementing a helper text feature 
 - Validate that the truncation is applied correctly and that the UI displays the ellipsis where appropriate.
 
 ## Summary
-This specification outlines the implementation of a helper text feature that provides inline guidance to content managers in the CMS. The approach includes an inline declaration format, server-side truncation logic, dedicated styling using Bootstrap, and comprehensive error handling and testing strategies. This document should serve as a clear blueprint for developers to begin implementing and integrating this feature into the CMS.
+This specification outlines the implementation of a helper text feature that provides inline guidance to content managers in the CMS. The approach includes an inline declaration format, parser truncation logic, dedicated styling using Bootstrap, and comprehensive error handling and testing strategies. This document should serve as a clear blueprint for developers to begin implementing and integrating this feature into the CMS.
