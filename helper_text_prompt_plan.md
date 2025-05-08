@@ -4,13 +4,13 @@ Below is a series of test-first prompts to incrementally implement the CMS helpe
 
 Prompt 1 – Layout Spec (RED)
 Write a failing Minitest spec for `Comfy::Cms::Layout#content_tokens`:
-- Given content `'a {{cms:text body helper:"Tip"}} b'`,
+- Given content `{{cms:text body helper:"Tip"}}`,
   when calling `layout.content_tokens`, expect tokens to include:
   `{ tag_class: 'text', tag_params: 'body', helper_text: 'Tip', source: '{{cms:text body helper:"Tip"}}' }`.
 - Add a spec for truncation: helper text > 240 chars yields 237 chars plus `…`.
 
 Prompt 2 – Layout Implementation
-In `app/models/comfy/cms/layout.rb` (method `content_tokens`):
+In `app/models/comfy/cms/layout.rb` (method `content_tokens`) and/or `lib/comfortable_media_surfer/content/renderer.rb` (method `tokenize`):
 - Extend tag parser to recognise `helper:"…"` parameter.
 - Add `helper_text` key to each token hash.
 - Truncate >240 chars to 237 + `…`.
@@ -39,7 +39,7 @@ Add tests for helper text boundaries:
 - No `helper` parameter yields no helper paragraph in the form.
 
 Prompt 6 – Warning Log on Truncation
-In the layout parser (`content_tokens`):
+In the layout parser (`content_tokens` or `tokenize`):
 - When truncating a helper string, call `Rails.logger.warn`
   including the layout identifier and original length.
 - Write a unit test capturing logger output, verifying the warning
