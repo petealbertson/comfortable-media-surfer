@@ -18,7 +18,7 @@
 
 ## Iteration 2 – Parser Upgrade
 ### 2A – Spec (RED)
-- [ ] Add failing parser spec for `helper:"..."` parameter extraction
+- [ ] Add failing parser spec for `helper_text:"..."` parameter extraction
 
 ### 2B – Implementation (GREEN)
 - [ ] Extend `LayoutParser#parse_tag` to capture `helper` parameter

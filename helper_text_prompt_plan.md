@@ -4,14 +4,14 @@ Below is a series of test-first prompts to incrementally implement the CMS helpe
 
 Prompt 1 – Layout Spec (RED)
 Write a failing Minitest spec for `Comfy::Cms::Layout#content_tokens`:
-- Given content `{{cms:text body helper:"Tip"}}`,
+- Given content `{{cms:text body helper_text:"Tip"}}`,
   when calling `layout.content_tokens`, expect tokens to include:
-  `{ tag_class: 'text', tag_params: 'body', helper_text: 'Tip', source: '{{cms:text body helper:"Tip"}}' }`.
+  `{ tag_class: 'text', tag_params: 'body', helper_text: 'Tip', source: '{{cms:text body helper_text:"Tip"}}' }`.
 - Add a spec for truncation: helper text > 240 chars yields 237 chars plus `…`.
 
 Prompt 2 – Layout Implementation
 In `app/models/comfy/cms/layout.rb` (method `content_tokens`) and/or `lib/comfortable_media_surfer/content/renderer.rb` (method `tokenize`):
-- Extend tag parser to recognise `helper:"…"` parameter.
+- Extend tag parser to recognise `helper_text:"…"` parameter.
 - Add `helper_text` key to each token hash.
 - Truncate >240 chars to 237 + `…`.
 - Preserve existing `tag_class`, `tag_params`, `source` keys and behavior.
@@ -19,7 +19,7 @@ In `app/models/comfy/cms/layout.rb` (method `content_tokens`) and/or `lib/comfor
 
 Prompt 3 – Admin UI Spec (RED)
 Write a failing system/integration Minitest spec for the Comfy admin edit form:
-- Given a page whose layout `content` includes `{{cms:text body helper:"Tip"}}`,
+- Given a page whose layout `content` includes `{{cms:text body helper_text:"Tip"}}`,
   when visiting the admin edit page, within the fragment field for `body`, assert:
   `%p.text-muted` with text "Tip" appears immediately below the input.
 - Visit the public show page and assert no helper text (`<p class="text-muted">`) is rendered.

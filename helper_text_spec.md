@@ -5,7 +5,7 @@ This document details the specifications for implementing a helper text feature 
 
 ## Features
 - **Inline Declaration**: Field declarations include a `helper` parameter.
-  - Example: `{{ cms:text headline helper:"Helper text here" }}`
+  - Example: `{{ cms:text headline helper_text:"Helper text here" }}`
 - **Supported Field Types**: All field types (text, textarea, image, etc.) are supported.
 
 ## Presentation in CMS Edit Interface
