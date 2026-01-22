@@ -731,15 +731,109 @@ class DefinedFilesPicker {
     this.fileInput.click();
   }
 
+  /**
+   * Validate file type against blocked extensions
+   * @param {string} filename - The filename to validate
+   * @returns {boolean} - True if file type is allowed, false otherwise
+   */
+  isFileTypeAllowed(filename) {
+    if (!filename) return false;
+    
+    // Blocked file extensions (security risk)
+    const blockedExtensions = [
+      '.exe', '.bat', '.cmd', '.com', '.dmg', '.app', 
+      '.msi', '.scr', '.vbs', '.js', '.sh', '.ps1'
+    ];
+    
+    const lowerFilename = filename.toLowerCase();
+    return !blockedExtensions.some(ext => lowerFilename.endsWith(ext));
+  }
+
+  /**
+   * Validate file size against maximum allowed
+   * @param {File} file - The file to validate
+   * @returns {boolean} - True if file size is allowed, false otherwise
+   */
+  isFileSizeAllowed(file) {
+    if (!file) return false;
+    
+    const maxSizeBytes = 20971520; // 20MB
+    return file.size <= maxSizeBytes;
+  }
+
+  /**
+   * Format file size in human-readable format
+   * @param {number} bytes - File size in bytes
+   * @returns {string} - Formatted file size
+   */
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
   async handleFileSelect(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     debugDefinedLinks("File selected for upload", { filename: file.name, size: file.size });
 
+    // Validate file type
+    if (!this.isFileTypeAllowed(file.name)) {
+      const errorMessage = "This file type is not allowed.";
+      this.uploadStatus.textContent = `✗ ${errorMessage}`;
+      this.uploadStatus.classList.add('cms-file-upload__status--error');
+      
+      // Report to Sentry
+      if (window.Sentry && window.Sentry.captureException) {
+        window.Sentry.captureException(new Error(`Blocked file type upload attempt: ${file.name}`));
+      }
+      
+      // Clear file input
+      this.fileInput.value = "";
+      
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        if (this.uploadStatus) {
+          this.uploadStatus.textContent = "Choose a file to link";
+          this.uploadStatus.classList.remove('cms-file-upload__status--error');
+        }
+      }, 5000);
+      
+      return;
+    }
+
+    // Validate file size
+    if (!this.isFileSizeAllowed(file)) {
+      const errorMessage = `File is too large (${this.formatFileSize(file.size)}). Maximum file size is 20MB.`;
+      this.uploadStatus.textContent = `✗ ${errorMessage}`;
+      this.uploadStatus.classList.add('cms-file-upload__status--error');
+      
+      // Report to Sentry
+      if (window.Sentry && window.Sentry.captureException) {
+        window.Sentry.captureException(new Error(`File size exceeded: ${file.name} (${file.size} bytes)`));
+      }
+      
+      // Clear file input
+      this.fileInput.value = "";
+      
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        if (this.uploadStatus) {
+          this.uploadStatus.textContent = "Choose a file to link";
+          this.uploadStatus.classList.remove('cms-file-upload__status--error');
+        }
+      }, 5000);
+      
+      return;
+    }
+
     this.isUploading = true;
     this.uploadButton.disabled = true;
     this.uploadStatus.textContent = `Uploading ${file.name}...`;
+    this.uploadStatus.classList.remove('cms-file-upload__status--error');
 
     try {
       const formData = new FormData();
@@ -795,7 +889,25 @@ class DefinedFilesPicker {
 
     } catch (error) {
       console.error("File upload failed", error);
-      this.uploadStatus.textContent = `✗ Upload failed: ${error.message}`;
+      
+      // Show user-friendly error message
+      const userMessage = "An error occurred while uploading the file. Please try again.";
+      this.uploadStatus.textContent = `✗ ${userMessage}`;
+      this.uploadStatus.classList.add('cms-file-upload__status--error');
+      
+      // Report full error to Sentry
+      if (window.Sentry && window.Sentry.captureException) {
+        window.Sentry.captureException(error, {
+          extra: {
+            filename: file.name,
+            fileSize: file.size,
+            uploadUrl: this.uploadUrl
+          }
+        });
+      }
+      
+      // Clear the file input
+      this.fileInput.value = "";
     } finally {
       this.isUploading = false;
       this.uploadButton.disabled = false;
@@ -804,6 +916,7 @@ class DefinedFilesPicker {
       setTimeout(() => {
         if (this.uploadStatus) {
           this.uploadStatus.textContent = "Choose a file to link";
+          this.uploadStatus.classList.remove('cms-file-upload__status--error');
         }
       }, 3000);
     }
