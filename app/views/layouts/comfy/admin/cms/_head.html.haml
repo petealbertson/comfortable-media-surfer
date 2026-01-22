@@ -7,6 +7,24 @@
 
   = csrf_meta_tag
 
+  -# GlitchTip/Sentry SDK initialization for error reporting
+  - if ENV['GLITCHTIP_DSN'].present?
+    %script{src: "https://browser.sentry-cdn.com/8.46.0/bundle.min.js", crossorigin: "anonymous", integrity: "sha384-bq3bW3v8TvQYzkeYqUmWrCOl4bQAiP9u4z8TQZ7MQz0lPLWxzXHpxCx7SFMp0Qd0"}
+    :javascript
+      Sentry.init({
+        dsn: "#{ENV['GLITCHTIP_DSN']}",
+        tracesSampleRate: 0.01,
+        environment: "#{Rails.env}",
+        beforeSend: function(event, hint) {
+          // Don't send events in development unless explicitly enabled
+          if ("#{Rails.env}" === "development" && !("#{ENV['GLITCHTIP_SEND_IN_DEV']}" === "true")) {
+            console.log("GlitchTip (dev mode):", event);
+            return null;
+          }
+          return event;
+        }
+      });
+
   - if @site && @site.persisted?
     %meta{name: "cms-file-upload-path", content: comfy_admin_cms_site_files_path(@site)}
     %meta{name: "cms-pages-path",       content: comfy_admin_cms_site_pages_path(@site)}
