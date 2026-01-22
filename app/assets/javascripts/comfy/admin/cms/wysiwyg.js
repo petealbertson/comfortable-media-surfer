@@ -278,6 +278,9 @@ class DefinedLinksPicker {
     } else {
       this.updateList(this.input?.value || "");
     }
+
+    // Show container immediately when dialog opens so upload button is visible
+    this.showContainer();
   }
 
   attachInput(input) {
