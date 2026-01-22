@@ -743,13 +743,23 @@ class DefinedFilesPicker {
       formData.append("file[file]", file);
       formData.append("source", "rhino");
 
+      // Get CSRF token from meta tag
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      const headers = {
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+      };
+
+      // Add CSRF token if available
+      if (csrfToken) {
+        headers["X-CSRF-Token"] = csrfToken;
+      }
+
       const response = await fetch(this.uploadUrl, {
         method: "POST",
         body: formData,
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          "Accept": "application/json"
-        },
+        headers: headers,
         credentials: "same-origin"
       });
 
