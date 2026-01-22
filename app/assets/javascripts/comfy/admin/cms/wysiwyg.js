@@ -256,14 +256,14 @@ class DefinedLinksPicker {
       const label = document.createElement("div");
       label.className = "cms-defined-links__label";
       label.textContent = "Link to CMS page or file";
-  label.setAttribute("part", "cms-defined-links__label");
+  		label.setAttribute("part", "cms-defined-links__label");
 
       this.list = document.createElement("ul");
       this.list.className = "cms-defined-links__results";
       this.list.setAttribute("role", "listbox");
       this.list.id = "cms-defined-links-results";
       this.list.setAttribute("aria-label", "CMS pages and files suggestions");
-  this.list.setAttribute("part", "cms-defined-links__results");
+  		this.list.setAttribute("part", "cms-defined-links__results");
       this.list.addEventListener("mousedown", this.handleListMouseDown);
       this.list.addEventListener("click", this.handleListClick);
 
@@ -1054,7 +1054,7 @@ class CmsWysiwygAdapter {
       this._setupSourceToggle();
       this._setupTocToggle();
       this._setupImageResizeControls();
-    this._setupTableControls();
+    	this._setupTableControls();
   		this._replaceAttachmentFiguresWithImages();
       const existingToc = this._findTocNode();
       if (existingToc?.node?.attrs?.items) {
