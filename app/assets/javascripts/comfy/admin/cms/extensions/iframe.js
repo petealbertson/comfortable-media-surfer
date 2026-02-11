@@ -55,7 +55,7 @@ const Iframe = Node.create({
     }
     classes.add(IFRAME_CLASS);
     merged.class = Array.from(classes).join(" ");
-    return ["iframe", merged];
+    return ["div", { class: "cms-iframe-responsive" }, ["iframe", merged]];
   },
   renderText({ node }) {
     const attrs = node.attrs.htmlAttributes || {};
